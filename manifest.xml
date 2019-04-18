@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<package uuid="rick_roll-9d37fc" version="0.0.0">
+ <names>
+  <name lang="en_US">rick_roll youtube</name>
+ </names>
+ <supportedLanguages>
+  <language>en_US</language>
+ </supportedLanguages>
+ <descriptionLanguages>
+  <language>en_US</language>
+ </descriptionLanguages>
+ <contents>
+  <behaviorContent path="behavior_1">
+   <userRequestable/>
+   <nature>interactive</nature>
+   <names>
+    <name lang="en_US">rick_roll</name>
+   </names>
+   <descriptions>
+    <description lang="en_US">goes to youtube but with a twist</description>
+   </descriptions>
+   <triggerSentences>
+    <sentence lang="en_US">Can you go to youtube</sentence>
+    <sentence lang="en_US">Can go to youtube</sentence>
+    <sentence lang="en_US">can you open youtube</sentence>
+    <sentence lang="en_US">open youtube</sentence>
+   </triggerSentences>
+   <loadingResponses>
+    <sentence lang="en_US">Do you want me to go to you tube</sentence>
+   </loadingResponses>
+   <autonomous/>
+   <permissions/>
+  </behaviorContent>
+ </contents>
+</package>

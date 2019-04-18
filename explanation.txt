@@ -1,0 +1,7 @@
+pepper asks you if you really want him to go to youtube, it waits for a yes or no answer.
+then it rick rolls you and asks you again if you really want to go to youtube waiting for a yes or no answer
+
+if you say yes, it makes another joke but it will launch youtube with gunther-ding dong song video. You can interact with youtube. 
+it will keep youtube open until you either say "Close Youtube" or "Stop Youtube".
+
+if you say no it will leave the behaviour.

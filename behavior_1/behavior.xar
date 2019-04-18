@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram><Box name="Hide Web View" id="4" localization="8" tooltip="Hides the webview (html content) on the tablet, behind a generic cover&#x0A;&#x0A;V1.0.0&#x0A;" x="1210" y="137"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        tabletService = None
+        try:
+            tabletService = self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.error(e)
+        return tabletService
+
+    def onInput_onStart(self):
+        # We create TabletService here in order to avoid
+        # problems with connections and disconnections of the tablet during the life of the application
+        tabletService = self._getTabletService()
+        if tabletService:
+            tabletService.hideWebview()
+        else:
+            self.logger.warning("ALTabletService not found.")
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="3" /></Box><Box name="Show Web View" id="8" localization="8" tooltip="Shows the webview (html content) on the tablet.&#x0A;&#x0A;V1.0.0&#x0A;" x="956" y="149"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        tabletService = None
+        try:
+            tabletService = self.session().service("ALTabletService")
+
+        except Exception as e:
+            self.logger.error(e)
+        return tabletService
+
+    def onInput_onStart(self):
+        # We create TabletService here in order to avoid
+        # problems with connections and disconnections of the tablet during the life of the application
+        tabletService = self._getTabletService()
+        if tabletService:
+            #tabletService.loadUrl("https://www.youtube.com/embed/tgbNymZ7vqY?autoplay=1")
+
+            tabletService.loadUrl("https://www.youtube.com/watch?v=z13qnzUQwuI&ab_channel=RobertoTrigona")
+            tabletService.showWebview()
+        else:
+            self.logger.warning("ALTabletService not found.")
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="3" /></Box><Box name="Play Video" id="1" localization="8" tooltip="Plays the video; returns when it&apos;s done.&#x0A;&#x0A;You can also interrupt, pause or resume the video.&#x0A;&#x0A;You can get events when the video starts or finishes.&#x0A;&#x0A;V1.0.0&#x0A;" x="481" y="62"><bitmap>media/images/box/interaction/rec_movie.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+
+    def onLoad(self):
+        self.isRunning = False
+        self.startConnectId = None
+        self.finishConnectId = None
+        self.tabletService = None
+
+    def onUnload(self):
+        if self.tabletService:
+            try:
+                self.tabletService.stopVideo()
+            except Exception as e:
+                self.logger.error(e)
+            finally:
+                self.disconnectStartedListener()
+                self.disconnectFinishedListener()
+                self.isRunning = False
+
+    def disconnectFinishedListener(self):
+        if self.finishConnectId and self.tabletService:
+            try:
+                self.tabletService.videoFinished.disconnect(self.finishConnectId)
+                self.finishConnectId = None
+            except Exception as e:
+                self.logger.error(e)
+
+    def disconnectStartedListener(self):
+        if self.startConnectId and self.tabletService:
+            try:
+                self.tabletService.videoStarted.disconnect(self.startConnectId)
+                self.startConnectId = None
+            except Exception as e:
+                self.logger.error(e)
+
+    def _getTabletService(self):
+        tabletService = None
+        try:
+            tabletService = self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.error(e)
+        return tabletService
+
+    def _getAbsoluteUrl(self, partialUrl):
+        import os
+        subpath = os.path.join(self.packageUid(), os.path.normpath(partialUrl).lstrip("\\/"))
+        if self.tabletService:
+            return "http://%s/apps/%s" % (self.tabletService.robotIp(), subpath.replace(os.path.sep, "/"))
+        else:
+            self.logger.warning("No ALTabletService, can't get robot Ip.")
+            return None
+
+    def connectStartCallback(self):
+        try:
+            self.startConnectId = self.tabletService.videoStarted.connect(self.onVideoStarted)
+        except Exception as err:
+            self.logger.warning("Failed to subscribe to started callback: %s " % err)
+
+    def connectStopCallback(self):
+        try:
+            self.finishConnectId = self.tabletService.videoFinished.connect(self.onVideoFinished)
+        except Exception as err:
+            self.logger.warning("Failed to subscribe to stopped callback: %s " % err)
+
+    def onInput_onStart(self):
+        if self.isRunning:
+            return # already running, nothing to do
+        self.isRunning = True
+        # We create TabletService here in order to avoid
+        # problems with connections and disconnections of the tablet during the life of the application
+        self.tabletService = self._getTabletService()
+        if self.tabletService:
+            try:
+                url = self.getParameter("VideoPath")
+                if url == '':
+                    self.logger.error("URL of the video is empty")
+                if not url.startswith('http'):
+                    url = self._getAbsoluteUrl(url)
+                self.connectStartCallback()
+                self.connectStopCallback()
+                self.tabletService.playVideo(url)
+            except Exception as err:
+                self.logger.warning("Error during playVideo or subscribe: %s " % err)
+                self.onStopped()
+                self.isRunning = False
+        else:
+            self.logger.warning("No ALTabletService, can't play video.")
+            self.onStopped()
+            self.isRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()
+        self.onStopped()
+
+    def onInput_onPauseVideo(self):
+        if self.tabletService:
+            self.tabletService.pauseVideo()
+
+    def onInput_onResumeVideo(self):
+        if self.tabletService:
+            self.tabletService.resumeVideo()
+
+    def onVideoStarted(self):
+        self.disconnectStartedListener()
+        self.onStarted()
+
+    def onVideoFinished(self):
+        self.disconnectFinishedListener()
+        self.onStopped()
+        self.isRunning = False]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Input name="onPauseVideo" type="1" type_size="1" nature="1" inner="0" tooltip="Pause the video when a signal is received on this input." id="4" /><Input name="onResumeVideo" type="1" type_size="1" nature="1" inner="0" tooltip="Resume the video when a signal is received on this input." id="5" /><Output name="onStarted" type="1" type_size="1" nature="2" inner="0" tooltip="Triggered when the video started" id="6" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="7" /><Parameter name="VideoPath" inherits_from_parent="0" content_type="3" value="rick_roll.mp4" default_value="" custom_choice="0" tooltip='path of the video inside the &quot;html&quot; folder (e.g. &quot;/video/myvideo.mp4&quot;' id="8" /></Box><Box name="Switch Case" id="2" localization="8" tooltip="Test input value and stimulate the output matching to this value. If there is no&#x0A;matching output, the default output (onDefault) is stimulated.&#x0A;&#x0A;You can edit a case by left double-clicking on the line. You can add a&#x0A;case by right clicking on a line and selecting &apos;Insert a row&apos;. You can delete&#x0A;a case by right clicking on a line and selecting &apos;Remove a row&apos;." plugin="dispatcher_plugin" x="72" y="162"><bitmap>media/images/box/interaction/choice.png</bitmap><script language="4"><content><![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+		  GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+		  GeneratedClass.__init__( self )
+
+	def onInput_onStart(self, p):
+		p = self.typeConversion(p)
+		if(p == self.typeConversion("Yes")):
+			self.output_1(p)
+		elif(p == self.typeConversion("No")):
+			self.output_2(p)
+		elif(p == self.typeConversion("Please")):
+			self.output_3(p)
+		elif(p == self.typeConversion("Yes Please")):
+			self.output_4(p)
+		else:
+			self.onDefault()
+
+	def typeConversion(self, p):
+		try:
+			p = float(p)
+			pint = int(p)
+			if( p == pint ):
+				p = pint
+		except:
+			p = str(p)
+		return p]]></content></script><pluginContent><keywords><keyword>&quot;Yes&quot;</keyword><keyword>&quot;No&quot;</keyword><keyword>&quot;Please&quot;</keyword><keyword>&quot;Yes Please&quot;</keyword><keyword></keyword></keywords></pluginContent><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="0" type_size="1" nature="1" inner="0" tooltip="Value to test." id="2" /><Output name="onDefault" type="1" type_size="1" nature="2" inner="0" tooltip="If the input value does not match any value set on the box." id="3" /><Output name="output_1" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="4" /><Output name="output_2" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="5" /><Output name="output_3" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="6" /><Output name="output_4" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="7" /></Box><Box name="Animated Say" id="3" localization="8" tooltip="Say some text with animations. The text can be localized." x="729" y="519"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="97" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="OK we will not go to youtube!" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user through the animation parameter.&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Animated Say (2)" id="6" localization="8" tooltip="Say some text with animations. The text can be localized." x="643" y="82"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="97" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="do you really want me to go to youtube" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="disabled" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user through the animation parameter.&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Delay" id="14" localization="8" tooltip="Wait a moment before triggering the output. &#x0A;Can be stopped anytime. &#x0A;Multiple inputs will trigger multiple outputs." x="483" y="219"><bitmap>media/images/box/wait.png</bitmap><script language="4"><content><![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.delayed = []
+
+    def onUnload(self):
+        self.cancelDelays()
+
+    def cancelDelays(self):
+        cancel_list = list(self.delayed)
+        for d in cancel_list:
+            d.cancel()
+
+    def cleanDelay(self, fut, fut_ref):
+        self.delayed.remove(fut)
+
+    def triggerOutput(self):
+        self.timerOutput()
+
+    def onInput_onStart(self):
+        import qi
+        import functools
+        delay_future = qi.async(self.triggerOutput, delay=int(self.getParameter("Timeout (s)") * 1000 * 1000))
+        # keep the async operation in an array for cancel
+        # and remove it when it is finished in the callback
+        self.delayed.append(delay_future)
+        bound_clean = functools.partial(self.cleanDelay, delay_future)
+        delay_future.addCallback(bound_clean)
+
+    def onInput_onStop(self):
+        if self.getParameter("Trigger timerOutput if cancelled") and self.delayed:
+            self.timerOutput()
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Start the Delay box with the configured timeout value." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Stop the wait and stimulate the output." id="3" /><Output name="timerOutput" type="1" type_size="1" nature="1" inner="0" tooltip="Send a bang once delay set in parameters is elapsed, or if the box is stopped and the appropriate parameter is set." id="4" /><Parameter name="Timeout (s)" inherits_from_parent="0" content_type="2" value="15" default_value="1" min="0" max="5000" tooltip="Duration the box waits before stimulating the output." id="5" /><Parameter name="Trigger timerOutput if cancelled" inherits_from_parent="0" content_type="0" value="0" default_value="1" tooltip="If the box is currently delaying at least one signal and cancelled, output will be stimulated." id="6" /></Box><Box name="Disco" id="16" localization="8" tooltip="ID : #04B 0002&#x0A;&#x0A;===================&#x0A;&#x0A;Tags : &#x0A;- Disco" x="482" y="457"><bitmap>media/images/box/movement/move.png</bitmap><script language="4"><content><![CDATA[class MyClass(GeneratedClass):
+	def __init__(self):
+		GeneratedClass.__init__(self)
+
+	def onUnload(self):
+		#puts code for box cleanup here
+		""
+
+	def onInput_onStart(self):
+		#self.onStopped() # activate output of the box
+		""
+
+	def onInput_onStop(self):
+		""]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Animation starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Animation stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when animation is finished." id="4" /><Timeline enable="1" fps="25" start_frame="1" end_frame="-1" size="398"><ActuatorList model="nao"><ActuatorCurve name="value" actuator="HeadYaw" mute="0" unit="0"><Key frame="42" value="-42.7" /><Key frame="62" value="16.6" /><Key frame="85" value="-42.7" /><Key frame="105" value="16.6" /><Key frame="127" value="-42.7" /><Key frame="147" value="16.6" /><Key frame="170" value="-42.7" /><Key frame="190" value="16.6" /><Key frame="217" value="42.7" /><Key frame="237" value="-16.6" /><Key frame="260" value="42.7" /><Key frame="280" value="-16.6" /><Key frame="301" value="42.7" /><Key frame="321" value="-16.6" /><Key frame="343" value="42.7" /><Key frame="363" value="-16.6" /><Key frame="396" value="0.524941" /></ActuatorCurve><ActuatorCurve name="value" actuator="HeadPitch" mute="0" unit="0"><Key frame="42" value="-27.3" /><Key frame="62" value="19.4" /><Key frame="85" value="-27.3" /><Key frame="105" value="19.4" /><Key frame="127" value="-27.3" /><Key frame="147" value="19.4" /><Key frame="170" value="-27.3" /><Key frame="190" value="19.4" /><Key frame="217" value="-27.3" /><Key frame="237" value="19.4" /><Key frame="260" value="-27.3" /><Key frame="280" value="19.4" /><Key frame="301" value="-27.3" /><Key frame="321" value="19.4" /><Key frame="343" value="-27.3" /><Key frame="363" value="19.4" /><Key frame="396" value="-9.84628" /></ActuatorCurve><ActuatorCurve name="value" actuator="LShoulderPitch" mute="0" unit="0"><Key frame="21" value="36.6484" /><Key frame="42" value="100.106" /><Key frame="62" value="106.347" /><Key frame="85" value="100.106" /><Key frame="105" value="106.347" /><Key frame="127" value="100.106" /><Key frame="147" value="106.347" /><Key frame="170" value="100.106" /><Key frame="190" value="106.347" /><Key frame="204" value="69.6" /><Key frame="219" value="-68.2895" /><Key frame="239" value="57.0441" /><Key frame="262" value="-68.2895" /><Key frame="282" value="57.0441" /><Key frame="303" value="-68.2895" /><Key frame="323" value="57.0441" /><Key frame="345" value="-68.2895" /><Key frame="365" value="57.0441" /><Key frame="385" value="61" /><Key frame="398" value="84.2858" /></ActuatorCurve><ActuatorCurve name="value" actuator="LShoulderRoll" mute="0" unit="0"><Key frame="21" value="19.5096" /><Key frame="42" value="13.8845" /><Key frame="62" value="11.2477" /><Key frame="85" value="13.8845" /><Key frame="105" value="11.2477" /><Key frame="127" value="13.8845" /><Key frame="147" value="11.2477" /><Key frame="170" value="13.8845" /><Key frame="190" value="11.2477" /><Key frame="204" value="9.5" /><Key frame="219" value="18.8112" /><Key frame="229" value="34.1" /><Key frame="239" value="-18" /><Key frame="251" value="34.1" /><Key frame="262" value="18.8112" /><Key frame="272" value="34.1" /><Key frame="282" value="-18" /><Key frame="294" value="34.1" /><Key frame="303" value="18.8112" /><Key frame="313" value="34.1" /><Key frame="323" value="-18" /><Key frame="335" value="34.1" /><Key frame="345" value="18.8112" /><Key frame="355" value="34.1" /><Key frame="365" value="-18" /><Key frame="377" value="34.1" /><Key frame="398" value="8.78677" /></ActuatorCurve><ActuatorCurve name="value" actuator="LElbowYaw" mute="0" unit="0"><Key frame="21" value="-37.5322" /><Key frame="32" value="-101.1" /><Key frame="42" value="-21.7996" /><Key frame="62" value="-35.4228" /><Key frame="85" value="-21.7996" /><Key frame="105" value="-35.4228" /><Key frame="127" value="-21.7996" /><Key frame="147" value="-35.4228" /><Key frame="170" value="-21.7996" /><Key frame="190" value="-35.4228" /><Key frame="204" value="-94.9" /><Key frame="219" value="48.7823" /><Key frame="229" value="4.3" /><Key frame="239" value="0.090296" /><Key frame="251" value="26.4" /><Key frame="262" value="48.7823" /><Key frame="272" value="4.3" /><Key frame="282" value="0.090296" /><Key frame="294" value="26.4" /><Key frame="303" value="48.7823" /><Key frame="313" value="4.3" /><Key frame="323" value="0.090296" /><Key frame="335" value="26.4" /><Key frame="345" value="48.7823" /><Key frame="355" value="4.3" /><Key frame="365" value="0.090296" /><Key frame="377" value="-39.1" /><Key frame="398" value="-69.349" /></ActuatorCurve><ActuatorCurve name="value" actuator="LElbowRoll" mute="0" unit="0"><Key frame="21" value="-78.6607" /><Key frame="32" value="-64.7" /><Key frame="42" value="-21.1795" /><Key frame="62" value="-11.5993" /><Key frame="85" value="-21.1795" /><Key frame="105" value="-11.5993" /><Key frame="127" value="-21.1795" /><Key frame="147" value="-11.5993" /><Key frame="170" value="-21.1795" /><Key frame="190" value="-11.5993" /><Key frame="204" value="-88.5" /><Key frame="219" value="-7.91266" /><Key frame="229" value="-75" /><Key frame="239" value="-14.7682" /><Key frame="251" value="-83.6" /><Key frame="262" value="-7.91266" /><Key frame="272" value="-75" /><Key frame="282" value="-14.7682" /><Key frame="294" value="-83.6" /><Key frame="303" value="-7.91266" /><Key frame="313" value="-75" /><Key frame="323" value="-14.7682" /><Key frame="335" value="-83.6" /><Key frame="345" value="-7.91266" /><Key frame="355" value="-75" /><Key frame="365" value="-14.7682" /><Key frame="377" value="-83.6" /><Key frame="398" value="-24.3436" /></ActuatorCurve><ActuatorCurve name="value" actuator="LWristYaw" mute="0" unit="0"><Key frame="21" value="6.85315" /><Key frame="32" value="-83.1" /><Key frame="42" value="-22.6785" /><Key frame="62" value="-24.0847" /><Key frame="85" value="-22.6785" /><Key frame="105" value="-24.0847" /><Key frame="127" value="-22.6785" /><Key frame="147" value="-24.0847" /><Key frame="170" value="-22.6785" /><Key frame="190" value="-24.0847" /><Key frame="219" value="-6.15002" /><Key frame="239" value="-22.9373" /><Key frame="262" value="-6.15002" /><Key frame="282" value="-22.9373" /><Key frame="303" value="-6.15002" /><Key frame="323" value="-22.9373" /><Key frame="345" value="-6.15002" /><Key frame="365" value="-22.9373" /><Key frame="398" value="4.74374" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHand" mute="0" unit="1"><Key frame="21" value="0.2" /><Key frame="32" value="0.6" /><Key frame="42" value="0.2648" /><Key frame="62" value="0.264" /><Key frame="85" value="0.2648" /><Key frame="105" value="0.264" /><Key frame="127" value="0.2648" /><Key frame="147" value="0.264" /><Key frame="170" value="0.2648" /><Key frame="190" value="0.264" /><Key frame="204" value="0.13" /><Key frame="219" value="0.678" /><Key frame="229" value="0.3" /><Key frame="239" value="0.6784" /><Key frame="251" value="0.3" /><Key frame="262" value="0.678" /><Key frame="272" value="0.3" /><Key frame="282" value="0.6784" /><Key frame="294" value="0.3" /><Key frame="303" value="0.678" /><Key frame="313" value="0.3" /><Key frame="323" value="0.6784" /><Key frame="335" value="0.3" /><Key frame="345" value="0.678" /><Key frame="355" value="0.3" /><Key frame="365" value="0.6784" /><Key frame="377" value="0.3" /><Key frame="398" value="0.2968" /></ActuatorCurve><ActuatorCurve name="value" actuator="RShoulderPitch" mute="0" unit="0"><Key frame="23" value="52.4738" /><Key frame="44" value="-68.2895" /><Key frame="64" value="57.0441" /><Key frame="87" value="-68.2895" /><Key frame="107" value="57.0441" /><Key frame="129" value="-68.2895" /><Key frame="149" value="57.0441" /><Key frame="172" value="-68.2895" /><Key frame="192" value="57.0441" /><Key frame="204" value="69.6" /><Key frame="217" value="100.106" /><Key frame="237" value="106.347" /><Key frame="260" value="100.106" /><Key frame="280" value="106.347" /><Key frame="301" value="100.106" /><Key frame="321" value="106.347" /><Key frame="343" value="100.106" /><Key frame="363" value="106.347" /><Key frame="386" value="67.9" /><Key frame="396" value="84.3785" /></ActuatorCurve><ActuatorCurve name="value" actuator="RShoulderRoll" mute="0" unit="0"><Key frame="23" value="-15.2956" /><Key frame="34" value="-38.4" /><Key frame="44" value="-18.8112" /><Key frame="54" value="-34.1" /><Key frame="64" value="18" /><Key frame="76" value="-34.1" /><Key frame="87" value="-18.8112" /><Key frame="97" value="-34.1" /><Key frame="107" value="18" /><Key frame="119" value="-34.1" /><Key frame="129" value="-18.8112" /><Key frame="139" value="-34.1" /><Key frame="149" value="18" /><Key frame="161" value="-34.1" /><Key frame="172" value="-18.8112" /><Key frame="182" value="-34.1" /><Key frame="192" value="18" /><Key frame="204" value="-9.5" /><Key frame="217" value="-13.8845" /><Key frame="237" value="-11.2477" /><Key frame="260" value="-13.8845" /><Key frame="280" value="-11.2477" /><Key frame="301" value="-13.8845" /><Key frame="321" value="-11.2477" /><Key frame="343" value="-13.8845" /><Key frame="363" value="-11.2477" /><Key frame="378" value="-26.1" /><Key frame="396" value="-9.40682" /></ActuatorCurve><ActuatorCurve name="value" actuator="RElbowYaw" mute="0" unit="0"><Key frame="23" value="34.0996" /><Key frame="34" value="32.5" /><Key frame="44" value="-48.7823" /><Key frame="54" value="-4.3" /><Key frame="64" value="-0.090296" /><Key frame="76" value="-26.4" /><Key frame="87" value="-48.7823" /><Key frame="97" value="-4.3" /><Key frame="107" value="-0.090296" /><Key frame="119" value="-26.4" /><Key frame="129" value="-48.7823" /><Key frame="139" value="-4.3" /><Key frame="149" value="-0.090296" /><Key frame="161" value="-26.4" /><Key frame="172" value="-48.7823" /><Key frame="182" value="-4.3" /><Key frame="192" value="-0.090296" /><Key frame="204" value="94.9" /><Key frame="217" value="21.7996" /><Key frame="237" value="35.4228" /><Key frame="260" value="21.7996" /><Key frame="280" value="35.4228" /><Key frame="301" value="21.7996" /><Key frame="321" value="35.4228" /><Key frame="343" value="21.7996" /><Key frame="363" value="35.4228" /><Key frame="378" value="90.5" /><Key frame="386" value="59.2" /><Key frame="396" value="69.3442" /></ActuatorCurve><ActuatorCurve name="value" actuator="RElbowRoll" mute="0" unit="0"><Key frame="23" value="77.1713" /><Key frame="34" value="64.2" /><Key frame="44" value="7.91266" /><Key frame="54" value="75" /><Key frame="64" value="14.7682" /><Key frame="76" value="83.6" /><Key frame="87" value="7.91266" /><Key frame="97" value="75" /><Key frame="107" value="14.7682" /><Key frame="119" value="83.6" /><Key frame="129" value="7.91266" /><Key frame="139" value="75" /><Key frame="149" value="14.7682" /><Key frame="161" value="83.6" /><Key frame="172" value="7.91266" /><Key frame="182" value="75" /><Key frame="192" value="14.7682" /><Key frame="204" value="88.5" /><Key frame="217" value="21.1795" /><Key frame="237" value="11.5993" /><Key frame="260" value="21.1795" /><Key frame="280" value="11.5993" /><Key frame="301" value="21.1795" /><Key frame="321" value="11.5993" /><Key frame="343" value="21.1795" /><Key frame="363" value="11.5993" /><Key frame="378" value="47.1" /><Key frame="386" value="50.8" /><Key frame="396" value="24.6121" /></ActuatorCurve><ActuatorCurve name="value" actuator="RWristYaw" mute="0" unit="0"><Key frame="23" value="-23.03" /><Key frame="34" value="79.8" /><Key frame="44" value="6.15002" /><Key frame="64" value="22.9373" /><Key frame="87" value="6.15002" /><Key frame="107" value="22.9373" /><Key frame="129" value="6.15002" /><Key frame="149" value="22.9373" /><Key frame="172" value="6.15002" /><Key frame="192" value="22.9373" /><Key frame="217" value="22.6785" /><Key frame="237" value="24.0847" /><Key frame="260" value="22.6785" /><Key frame="280" value="24.0847" /><Key frame="301" value="22.6785" /><Key frame="321" value="24.0847" /><Key frame="343" value="22.6785" /><Key frame="363" value="24.0847" /><Key frame="396" value="6.2379" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHand" mute="0" unit="1"><Key frame="23" value="0.2" /><Key frame="34" value="0.5" /><Key frame="44" value="0.678" /><Key frame="54" value="0.3" /><Key frame="64" value="0.6784" /><Key frame="76" value="0.3" /><Key frame="87" value="0.678" /><Key frame="97" value="0.3" /><Key frame="107" value="0.6784" /><Key frame="119" value="0.3" /><Key frame="129" value="0.678" /><Key frame="139" value="0.3" /><Key frame="149" value="0.6784" /><Key frame="161" value="0.3" /><Key frame="172" value="0.678" /><Key frame="182" value="0.3" /><Key frame="192" value="0.6784" /><Key frame="204" value="0.13" /><Key frame="217" value="0.2648" /><Key frame="237" value="0.264" /><Key frame="260" value="0.2648" /><Key frame="280" value="0.264" /><Key frame="301" value="0.2648" /><Key frame="321" value="0.264" /><Key frame="343" value="0.2648" /><Key frame="363" value="0.264" /><Key frame="386" value="0.24" /><Key frame="396" value="0.2976" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipYawPitch" mute="0" unit="0"><Key frame="18" value="-25.3983" /><Key frame="40" value="-21.3553" /><Key frame="60" value="-20.4764" /><Key frame="83" value="-21.3553" /><Key frame="103" value="-20.4764" /><Key frame="125" value="-21.3553" /><Key frame="145" value="-20.4764" /><Key frame="168" value="-21.3553" /><Key frame="188" value="-20.4764" /><Key frame="215" value="-21.3553" /><Key frame="235" value="-20.4764" /><Key frame="258" value="-21.3553" /><Key frame="278" value="-20.4764" /><Key frame="299" value="-21.3553" /><Key frame="319" value="-20.4764" /><Key frame="341" value="-21.3553" /><Key frame="361" value="-20.4764" /><Key frame="394" value="-9.75358" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipRoll" mute="0" unit="0"><Key frame="18" value="0.266079" /><Key frame="40" value="-8.25942" /><Key frame="60" value="18.8991" /><Key frame="83" value="-8.25942" /><Key frame="103" value="18.8991" /><Key frame="125" value="-8.25942" /><Key frame="145" value="18.8991" /><Key frame="168" value="-8.25942" /><Key frame="188" value="18.8991" /><Key frame="215" value="17.0486" /><Key frame="235" value="-8.08844" /><Key frame="258" value="17.0486" /><Key frame="278" value="-8.08844" /><Key frame="299" value="17.0486" /><Key frame="319" value="-8.08844" /><Key frame="341" value="17.0486" /><Key frame="361" value="-8.08844" /><Key frame="394" value="5.89115" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipPitch" mute="0" unit="0"><Key frame="18" value="-8.78677" /><Key frame="40" value="10.6373" /><Key frame="60" value="8.44001" /><Key frame="83" value="10.6373" /><Key frame="103" value="8.44001" /><Key frame="125" value="10.6373" /><Key frame="145" value="8.44001" /><Key frame="168" value="10.6373" /><Key frame="188" value="8.44001" /><Key frame="215" value="5.79845" /><Key frame="235" value="14.8513" /><Key frame="258" value="5.79845" /><Key frame="278" value="14.8513" /><Key frame="299" value="5.79845" /><Key frame="319" value="14.8513" /><Key frame="341" value="5.79845" /><Key frame="361" value="14.8513" /><Key frame="394" value="8.00056" /></ActuatorCurve><ActuatorCurve name="value" actuator="LKneePitch" mute="0" unit="0"><Key frame="18" value="23.201" /><Key frame="40" value="-5.18802" /><Key frame="60" value="-4.57277" /><Key frame="83" value="-5.18802" /><Key frame="103" value="-4.57277" /><Key frame="125" value="-5.18802" /><Key frame="145" value="-4.57277" /><Key frame="168" value="-5.18802" /><Key frame="188" value="-4.57277" /><Key frame="215" value="-5.18321" /><Key frame="235" value="-5.18321" /><Key frame="258" value="-5.18321" /><Key frame="278" value="-5.18321" /><Key frame="299" value="-5.18321" /><Key frame="319" value="-5.18321" /><Key frame="341" value="-5.18321" /><Key frame="361" value="-5.18321" /><Key frame="394" value="-4.48488" /></ActuatorCurve><ActuatorCurve name="value" actuator="LAnklePitch" mute="0" unit="0"><Key frame="18" value="-2.63916" /><Key frame="40" value="2.54646" /><Key frame="60" value="9.22623" /><Key frame="83" value="2.54646" /><Key frame="103" value="9.22623" /><Key frame="125" value="2.54646" /><Key frame="145" value="9.22623" /><Key frame="168" value="2.54646" /><Key frame="188" value="9.22623" /><Key frame="215" value="5.27591" /><Key frame="235" value="4.74856" /><Key frame="258" value="5.27591" /><Key frame="278" value="4.74856" /><Key frame="299" value="5.27591" /><Key frame="319" value="4.74856" /><Key frame="341" value="5.27591" /><Key frame="361" value="4.74856" /><Key frame="394" value="5.00743" /></ActuatorCurve><ActuatorCurve name="value" actuator="LAnkleRoll" mute="0" unit="0"><Key frame="18" value="-1.0523" /><Key frame="40" value="3.60597" /><Key frame="60" value="-14.2361" /><Key frame="83" value="3.60597" /><Key frame="103" value="-14.2361" /><Key frame="125" value="3.60597" /><Key frame="145" value="-14.2361" /><Key frame="168" value="3.60597" /><Key frame="188" value="-14.2361" /><Key frame="215" value="-15.1198" /><Key frame="235" value="5.18321" /><Key frame="258" value="-15.1198" /><Key frame="278" value="5.18321" /><Key frame="299" value="-15.1198" /><Key frame="319" value="5.18321" /><Key frame="341" value="-15.1198" /><Key frame="361" value="5.18321" /><Key frame="394" value="-6.94104" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipRoll" mute="0" unit="0"><Key frame="18" value="-6.85315" /><Key frame="40" value="-17.0486" /><Key frame="60" value="8.08844" /><Key frame="83" value="-17.0486" /><Key frame="103" value="8.08844" /><Key frame="125" value="-17.0486" /><Key frame="145" value="8.08844" /><Key frame="168" value="-17.0486" /><Key frame="188" value="8.08844" /><Key frame="215" value="8.25942" /><Key frame="235" value="-18.8991" /><Key frame="258" value="8.25942" /><Key frame="278" value="-18.8991" /><Key frame="299" value="8.25942" /><Key frame="319" value="-18.8991" /><Key frame="341" value="8.25942" /><Key frame="361" value="-18.8991" /><Key frame="394" value="-5.53478" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipPitch" mute="0" unit="0"><Key frame="18" value="-10.1978" /><Key frame="40" value="5.79845" /><Key frame="60" value="14.8513" /><Key frame="83" value="5.79845" /><Key frame="103" value="14.8513" /><Key frame="125" value="5.79845" /><Key frame="145" value="14.8513" /><Key frame="168" value="5.79845" /><Key frame="188" value="14.8513" /><Key frame="215" value="10.6373" /><Key frame="235" value="8.44001" /><Key frame="258" value="10.6373" /><Key frame="278" value="8.44001" /><Key frame="299" value="10.6373" /><Key frame="319" value="8.44001" /><Key frame="341" value="10.6373" /><Key frame="361" value="8.44001" /><Key frame="394" value="7.55628" /></ActuatorCurve><ActuatorCurve name="value" actuator="RKneePitch" mute="0" unit="0"><Key frame="18" value="24.4363" /><Key frame="40" value="-5.18321" /><Key frame="60" value="-5.18321" /><Key frame="83" value="-5.18321" /><Key frame="103" value="-5.18321" /><Key frame="125" value="-5.18321" /><Key frame="145" value="-5.18321" /><Key frame="168" value="-5.18321" /><Key frame="188" value="-5.18321" /><Key frame="215" value="-5.18802" /><Key frame="235" value="-4.57277" /><Key frame="258" value="-5.18802" /><Key frame="278" value="-4.57277" /><Key frame="299" value="-5.18802" /><Key frame="319" value="-4.57277" /><Key frame="341" value="-5.18802" /><Key frame="361" value="-4.57277" /><Key frame="394" value="-5.2711" /></ActuatorCurve><ActuatorCurve name="value" actuator="RAnklePitch" mute="0" unit="0"><Key frame="18" value="-2.98591" /><Key frame="40" value="5.27591" /><Key frame="60" value="4.74856" /><Key frame="83" value="5.27591" /><Key frame="103" value="4.74856" /><Key frame="125" value="5.27591" /><Key frame="145" value="4.74856" /><Key frame="168" value="5.27591" /><Key frame="188" value="4.74856" /><Key frame="215" value="2.54646" /><Key frame="235" value="9.22623" /><Key frame="258" value="2.54646" /><Key frame="278" value="9.22623" /><Key frame="299" value="2.54646" /><Key frame="319" value="9.22623" /><Key frame="341" value="2.54646" /><Key frame="361" value="9.22623" /><Key frame="394" value="5.3638" /></ActuatorCurve><ActuatorCurve name="value" actuator="RAnkleRoll" mute="0" unit="0"><Key frame="18" value="5.53958" /><Key frame="40" value="15.1198" /><Key frame="60" value="-5.18321" /><Key frame="83" value="15.1198" /><Key frame="103" value="-5.18321" /><Key frame="125" value="15.1198" /><Key frame="145" value="-5.18321" /><Key frame="168" value="15.1198" /><Key frame="188" value="-5.18321" /><Key frame="215" value="-3.60597" /><Key frame="235" value="14.2361" /><Key frame="258" value="-3.60597" /><Key frame="278" value="14.2361" /><Key frame="299" value="-3.60597" /><Key frame="319" value="14.2361" /><Key frame="341" value="-3.60597" /><Key frame="361" value="14.2361" /><Key frame="394" value="6.85796" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipYawPitch" mute="0" unit="0"><Key frame="40" value="-21.3553" /><Key frame="83" value="-21.3553" /><Key frame="125" value="-21.3553" /><Key frame="168" value="-21.3553" /><Key frame="215" value="-21.3553" /><Key frame="258" value="-21.3553" /><Key frame="299" value="-21.3553" /><Key frame="341" value="-21.3553" /><Key frame="394" value="-9.75358" /></ActuatorCurve></ActuatorList></Timeline><Resource name="Standing" type="Lock" timeout="1" /><Resource name="All motors" type="Lock" timeout="1" /></Box><Box name="Switch Case (1)" id="10" localization="8" tooltip="Test input value and stimulate the output matching to this value. If there is no&#x0A;matching output, the default output (onDefault) is stimulated.&#x0A;&#x0A;You can edit a case by left double-clicking on the line. You can add a&#x0A;case by right clicking on a line and selecting &apos;Insert a row&apos;. You can delete&#x0A;a case by right clicking on a line and selecting &apos;Remove a row&apos;." plugin="dispatcher_plugin" x="708" y="289"><bitmap>media/images/box/interaction/choice.png</bitmap><script language="4"><content><![CDATA[# /!\ Generated content. Do not edit!
+class MyClass(GeneratedClass):
+	def __init__(self):
+		try: # disable autoBind
+		  GeneratedClass.__init__(self, False)
+		except TypeError: # if NAOqi < 1.14
+		  GeneratedClass.__init__( self )
+
+	def onInput_onStart(self, p):
+		p = self.typeConversion(p)
+		if(p == self.typeConversion("Yes")):
+			self.output_1(p)
+		elif(p == self.typeConversion("No")):
+			self.output_2(p)
+		elif(p == self.typeConversion("Please")):
+			self.output_3(p)
+		elif(p == self.typeConversion("Yes Please")):
+			self.output_4(p)
+		else:
+			self.onDefault()
+
+	def typeConversion(self, p):
+		try:
+			p = float(p)
+			pint = int(p)
+			if( p == pint ):
+				p = pint
+		except:
+			p = str(p)
+		return p]]></content></script><pluginContent><keywords><keyword>&quot;Yes&quot;</keyword><keyword>&quot;No&quot;</keyword><keyword>&quot;Please&quot;</keyword><keyword>&quot;Yes Please&quot;</keyword><keyword></keyword></keywords></pluginContent><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="0" type_size="1" nature="1" inner="0" tooltip="Value to test." id="2" /><Output name="onDefault" type="1" type_size="1" nature="2" inner="0" tooltip="If the input value does not match any value set on the box." id="3" /><Output name="output_1" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="4" /><Output name="output_2" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="5" /><Output name="output_3" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="6" /><Output name="output_4" type="0" type_size="1" nature="2" inner="0" tooltip="This IO has been automatically added by box. Read box tooltip for more information." id="7" /></Box><Box name="Animated Say (1)" id="11" localization="8" tooltip="Say some text with animations. The text can be localized." x="314" y="54"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="I got a better idea youtube is a waste of time! see if you like it" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user through the animation parameter.&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Speech Reco. (1)" id="7" localization="8" tooltip="Recognize a word from a list of words set in the box parameters.&#x0A;&#x0A;V1.1.0&#x0A;" x="792" y="81"><bitmap>media/images/box/interaction/ear.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        try:
+            self.asr = ALProxy("ALSpeechRecognition")
+        except Exception as e:
+            self.asr = None
+            self.logger.error(e)
+        self.memory = ALProxy("ALMemory")
+
+    def onLoad(self):
+        from threading import Lock
+        self.bIsRunning = False
+        self.mutex = Lock()
+        self.hasPushed = False
+        self.hasSubscribed = False
+        self.BIND_PYTHON(self.getName(), "onWordRecognized")
+
+    def onUnload(self):
+        from threading import Lock
+        self.mutex.acquire()
+        try:
+            if (self.bIsRunning):
+                if (self.hasSubscribed):
+                    self.memory.unsubscribeToEvent("WordRecognized", self.getName())
+                if (self.hasPushed and self.asr):
+                    self.asr.popContexts()
+        except RuntimeError, e:
+            self.mutex.release()
+            raise e
+        self.bIsRunning = False;
+        self.mutex.release()
+
+    def onInput_onStart(self):
+        from threading import Lock
+        self.mutex.acquire()
+        if(self.bIsRunning):
+            self.mutex.release()
+            return
+        self.bIsRunning = True
+        try:
+            if self.asr:
+                self.asr.setVisualExpression(self.getParameter("Visual expression"))
+                self.asr.pushContexts()
+            self.hasPushed = True
+            if self.asr:
+                self.asr.setVocabulary( self.getParameter("Word list").split(';'), self.getParameter("Enable word spotting") )
+            self.memory.subscribeToEvent("WordRecognized", self.getName(), "onWordRecognized")
+            self.hasSubscribed = True
+        except RuntimeError, e:
+            self.mutex.release()
+            self.onUnload()
+            raise e
+        self.mutex.release()
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()
+
+    def onWordRecognized(self, key, value, message):
+        if(len(value) > 1 and value[1] >= self.getParameter("Confidence threshold (%)")/100.):
+            self.wordRecognized(value[0]) #~ activate output of the box
+        else:
+            self.onNothing()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="wordRecognized" type="3" type_size="1" nature="2" inner="0" tooltip="Word recognized with a confidence higher than the threshold set in the box parameters." id="5" /><Output name="onNothing" type="1" type_size="1" nature="2" inner="0" tooltip="Nothing has been understood." id="6" /><Parameter name="Word list" inherits_from_parent="0" content_type="3" value="Yes;No;Please;Yes Please" default_value="yes;no" custom_choice="0" tooltip="Try to recognize a word from a list of words set in the box parameters." id="7" /><Parameter name="Confidence threshold (%)" inherits_from_parent="0" content_type="1" value="43" default_value="30" min="0" max="100" tooltip="If the confidence associated with the word recognized is below this threshold, the robot will consider that it is not recognized." id="8" /><Parameter name="Visual expression" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="Use the LEDs to show feedbacks from the robot during the recognition.&#x0A;&#x0A;For example:&#x0A;- Eyes leds get blue and turn when the speech recognition is launched.&#x0A;- They get yellow when the robot hears someone talking and analyses what it heard.&#x0A;- They flash in green when the robot understood and flash in red otherwise." id="9" /><Parameter name="Enable word spotting" inherits_from_parent="0" content_type="0" value="0" default_value="0" tooltip="If this option is not activated the robot will only understand exact expressions. If it is, he will spot the exact expressions even in the middle of a sentence.&#x0A;&#x0A;!!Warning!! This option is only available with the speech recognition module using Nuance (ie in Atom version of the robot)." id="10" /><Resource name="Speech recognition" type="Lock" timeout="0" /></Box><Box name="Speech Reco. (2)" id="9" localization="8" tooltip="Recognize a word from a list of words set in the box parameters.&#x0A;&#x0A;V1.1.0&#x0A;" x="1069" y="96"><bitmap>media/images/box/interaction/ear.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        try:
+            self.asr = ALProxy("ALSpeechRecognition")
+        except Exception as e:
+            self.asr = None
+            self.logger.error(e)
+        self.memory = ALProxy("ALMemory")
+
+    def onLoad(self):
+        from threading import Lock
+        self.bIsRunning = False
+        self.mutex = Lock()
+        self.hasPushed = False
+        self.hasSubscribed = False
+        self.BIND_PYTHON(self.getName(), "onWordRecognized")
+
+    def onUnload(self):
+        from threading import Lock
+        self.mutex.acquire()
+        try:
+            if (self.bIsRunning):
+                if (self.hasSubscribed):
+                    self.memory.unsubscribeToEvent("WordRecognized", self.getName())
+                if (self.hasPushed and self.asr):
+                    self.asr.popContexts()
+        except RuntimeError, e:
+            self.mutex.release()
+            raise e
+        self.bIsRunning = False;
+        self.mutex.release()
+
+    def onInput_onStart(self):
+        from threading import Lock
+        self.mutex.acquire()
+        if(self.bIsRunning):
+            self.mutex.release()
+            return
+        self.bIsRunning = True
+        try:
+            if self.asr:
+                self.asr.setVisualExpression(self.getParameter("Visual expression"))
+                self.asr.pushContexts()
+            self.hasPushed = True
+            if self.asr:
+                self.asr.setVocabulary( self.getParameter("Word list").split(';'), self.getParameter("Enable word spotting") )
+            self.memory.subscribeToEvent("WordRecognized", self.getName(), "onWordRecognized")
+            self.hasSubscribed = True
+        except RuntimeError, e:
+            self.mutex.release()
+            self.onUnload()
+            raise e
+        self.mutex.release()
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()
+
+    def onWordRecognized(self, key, value, message):
+        if(len(value) > 1 and value[1] >= self.getParameter("Confidence threshold (%)")/100.):
+            self.wordRecognized(value[0]) #~ activate output of the box
+        else:
+            self.onNothing()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="wordRecognized" type="3" type_size="1" nature="2" inner="0" tooltip="Word recognized with a confidence higher than the threshold set in the box parameters." id="5" /><Output name="onNothing" type="1" type_size="1" nature="2" inner="0" tooltip="Nothing has been understood." id="6" /><Parameter name="Word list" inherits_from_parent="0" content_type="3" value="close youtube; stop youtube; pepper close youtube; pepper stop youtube; stop" default_value="yes;no" custom_choice="0" tooltip="Try to recognize a word from a list of words set in the box parameters." id="7" /><Parameter name="Confidence threshold (%)" inherits_from_parent="0" content_type="1" value="43" default_value="30" min="0" max="100" tooltip="If the confidence associated with the word recognized is below this threshold, the robot will consider that it is not recognized." id="8" /><Parameter name="Visual expression" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="Use the LEDs to show feedbacks from the robot during the recognition.&#x0A;&#x0A;For example:&#x0A;- Eyes leds get blue and turn when the speech recognition is launched.&#x0A;- They get yellow when the robot hears someone talking and analyses what it heard.&#x0A;- They flash in green when the robot understood and flash in red otherwise." id="9" /><Parameter name="Enable word spotting" inherits_from_parent="0" content_type="0" value="0" default_value="0" tooltip="If this option is not activated the robot will only understand exact expressions. If it is, he will spot the exact expressions even in the middle of a sentence.&#x0A;&#x0A;!!Warning!! This option is only available with the speech recognition module using Nuance (ie in Atom version of the robot)." id="10" /><Resource name="Speech recognition" type="Lock" timeout="0" /></Box><Box name="Animated Say (3)" id="12" localization="8" tooltip="Say some text with animations. The text can be localized." x="936" y="311"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="great, feel free to touch my tra la la" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user through the animation parameter.&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Excited" id="13" localization="8" tooltip="ID : #02A 0003&#x0A;&#x0A;===================&#x0A;&#x0A;Tags : &#x0A;- Excited" x="483" y="331"><bitmap>media/images/box/movement/move.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="1" fps="25" start_frame="1" end_frame="-1" size="54"><ActuatorList model=""><ActuatorCurve name="value" actuator="HeadPitch" mute="0" unit="0"><Key frame="7" value="-38.5" /><Key frame="14" value="-1.4" /><Key frame="17" value="-28.8" /><Key frame="22" value="-11.2" /><Key frame="26" value="-28.8" /><Key frame="31" value="-11.2" /><Key frame="35" value="-28.8" /><Key frame="39" value="-11.2" /><Key frame="50" value="-25.2" /></ActuatorCurve><ActuatorCurve name="value" actuator="HeadYaw" mute="0" unit="0"><Key frame="7" value="-0.969218" /><Key frame="50" value="-0.969218" /></ActuatorCurve><ActuatorCurve name="value" actuator="LAnklePitch" mute="0" unit="0"><Key frame="14" value="-8.17634" /><Key frame="18" value="-10.4615" /><Key frame="22" value="-8.17634" /><Key frame="26" value="-10.4615" /><Key frame="30" value="-8.17634" /><Key frame="34" value="-10.4615" /><Key frame="38" value="-8.17634" /><Key frame="42" value="-10.4615" /><Key frame="46" value="-8.17634" /><Key frame="50" value="-10.4615" /></ActuatorCurve><ActuatorCurve name="value" actuator="LAnkleRoll" mute="0" unit="0"><Key frame="14" value="-6.32579" /><Key frame="18" value="-6.32579" /><Key frame="22" value="-6.32579" /><Key frame="26" value="-6.32579" /><Key frame="30" value="-6.32579" /><Key frame="34" value="-6.32579" /><Key frame="38" value="-6.32579" /><Key frame="42" value="-6.32579" /><Key frame="46" value="-6.32579" /><Key frame="50" value="-6.32579" /></ActuatorCurve><ActuatorCurve name="value" actuator="LElbowRoll" mute="0" unit="0"><Key frame="10" value="-85.5" /><Key frame="18" value="-85.9557" /><Key frame="22" value="-74.5" /><Key frame="26" value="-85.9557" /><Key frame="30" value="-74.5" /><Key frame="34" value="-85.9557" /><Key frame="38" value="-74.5" /><Key frame="42" value="-85.9557" /><Key frame="46" value="-74.5" /><Key frame="50" value="-85.9557" /><Key frame="54" value="-74.5" /></ActuatorCurve><ActuatorCurve name="value" actuator="LElbowYaw" mute="0" unit="0"><Key frame="18" value="-81.3901" /><Key frame="26" value="-81.3901" /><Key frame="34" value="-81.3901" /><Key frame="42" value="-81.3901" /><Key frame="50" value="-81.3901" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHand" mute="0" unit="1"><Key frame="10" value="0.63" /><Key frame="18" value="0.27" /><Key frame="22" value="0" /><Key frame="26" value="0.24" /><Key frame="30" value="0" /><Key frame="34" value="0.28" /><Key frame="38" value="0" /><Key frame="42" value="0.26" /><Key frame="46" value="0" /><Key frame="50" value="0.24" /><Key frame="54" value="0" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipPitch" mute="0" unit="0"><Key frame="14" value="-28.0351" /><Key frame="18" value="-38.1426" /><Key frame="22" value="-28.0351" /><Key frame="26" value="-38.1426" /><Key frame="30" value="-28.0351" /><Key frame="34" value="-38.1426" /><Key frame="38" value="-28.0351" /><Key frame="42" value="-38.1426" /><Key frame="46" value="-28.0351" /><Key frame="50" value="-38.1426" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipRoll" mute="0" unit="0"><Key frame="14" value="4.3091" /><Key frame="18" value="4.3091" /><Key frame="22" value="4.3091" /><Key frame="26" value="4.3091" /><Key frame="30" value="4.3091" /><Key frame="34" value="4.3091" /><Key frame="38" value="4.3091" /><Key frame="42" value="4.3091" /><Key frame="46" value="4.3091" /><Key frame="50" value="4.3091" /></ActuatorCurve><ActuatorCurve name="value" actuator="LHipYawPitch" mute="0" unit="0"><Key frame="14" value="-11.7751" /><Key frame="18" value="-13.0056" /><Key frame="22" value="-11.7751" /><Key frame="26" value="-13.0056" /><Key frame="30" value="-11.7751" /><Key frame="34" value="-13.0056" /><Key frame="38" value="-11.7751" /><Key frame="42" value="-13.0056" /><Key frame="46" value="-11.7751" /><Key frame="50" value="-13.0056" /></ActuatorCurve><ActuatorCurve name="value" actuator="LKneePitch" mute="0" unit="0"><Key frame="14" value="37" /><Key frame="18" value="46.9318" /><Key frame="22" value="37" /><Key frame="26" value="46.9318" /><Key frame="30" value="37" /><Key frame="34" value="46.9318" /><Key frame="38" value="37" /><Key frame="42" value="46.9318" /><Key frame="46" value="37" /><Key frame="50" value="46.9318" /></ActuatorCurve><ActuatorCurve name="value" actuator="LShoulderPitch" mute="0" unit="0"><Key frame="8" value="54.2" /><Key frame="16" value="66.2" /><Key frame="20" value="69.6" /><Key frame="24" value="66.2" /><Key frame="28" value="69.6" /><Key frame="32" value="66.2" /><Key frame="36" value="69.6" /><Key frame="40" value="66.2" /><Key frame="44" value="69.6" /><Key frame="48" value="66.2" /><Key frame="52" value="69.6" /></ActuatorCurve><ActuatorCurve name="value" actuator="LShoulderRoll" mute="0" unit="0"><Key frame="8" value="12.8" /><Key frame="16" value="-6.3306" /><Key frame="24" value="-6.3306" /><Key frame="32" value="-6.3306" /><Key frame="40" value="-6.3306" /><Key frame="48" value="-6.3306" /></ActuatorCurve><ActuatorCurve name="value" actuator="LWristYaw" mute="0" unit="0"><Key frame="10" value="-36.1" /><Key frame="18" value="5.79845" /><Key frame="26" value="5.79845" /><Key frame="34" value="5.79845" /><Key frame="42" value="5.79845" /><Key frame="50" value="5.79845" /></ActuatorCurve><ActuatorCurve name="value" actuator="RAnklePitch" mute="0" unit="0"><Key frame="14" value="-10.7204" /><Key frame="18" value="-13.3571" /><Key frame="22" value="-10.7204" /><Key frame="26" value="-13.3571" /><Key frame="30" value="-10.7204" /><Key frame="34" value="-13.3571" /><Key frame="38" value="-10.7204" /><Key frame="42" value="-13.3571" /><Key frame="46" value="-10.7204" /><Key frame="50" value="-13.3571" /></ActuatorCurve><ActuatorCurve name="value" actuator="RAnkleRoll" mute="0" unit="0"><Key frame="14" value="7.12163" /><Key frame="18" value="7.12163" /><Key frame="22" value="7.12163" /><Key frame="26" value="7.12163" /><Key frame="30" value="7.12163" /><Key frame="34" value="7.12163" /><Key frame="38" value="7.12163" /><Key frame="42" value="7.12163" /><Key frame="46" value="7.12163" /><Key frame="50" value="7.12163" /></ActuatorCurve><ActuatorCurve name="value" actuator="RElbowRoll" mute="0" unit="0"><Key frame="10" value="85.5" /><Key frame="15" value="85.1695" /><Key frame="19" value="74.5" /><Key frame="23" value="85.1695" /><Key frame="27" value="74.5" /><Key frame="31" value="85.1695" /><Key frame="35" value="74.5" /><Key frame="39" value="85.1695" /><Key frame="43" value="74.5" /><Key frame="47" value="85.1695" /><Key frame="51" value="74.5" /></ActuatorCurve><ActuatorCurve name="value" actuator="RElbowYaw" mute="0" unit="0"><Key frame="15" value="76.7271" /><Key frame="23" value="76.7271" /><Key frame="31" value="76.7271" /><Key frame="39" value="76.7271" /><Key frame="47" value="76.7271" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHand" mute="0" unit="1"><Key frame="10" value="0.63" /><Key frame="15" value="0.27" /><Key frame="19" value="0" /><Key frame="23" value="0.24" /><Key frame="27" value="0" /><Key frame="31" value="0.28" /><Key frame="35" value="0" /><Key frame="39" value="0.26" /><Key frame="43" value="0" /><Key frame="47" value="0.24" /><Key frame="51" value="0" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipPitch" mute="0" unit="0"><Key frame="14" value="-27.8641" /><Key frame="18" value="-38.1474" /><Key frame="22" value="-27.8641" /><Key frame="26" value="-38.1474" /><Key frame="30" value="-27.8641" /><Key frame="34" value="-38.1474" /><Key frame="38" value="-27.8641" /><Key frame="42" value="-38.1474" /><Key frame="46" value="-27.8641" /><Key frame="50" value="-38.1474" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipRoll" mute="0" unit="0"><Key frame="14" value="-4.30429" /><Key frame="18" value="-3.68905" /><Key frame="22" value="-4.30429" /><Key frame="26" value="-3.68905" /><Key frame="30" value="-4.30429" /><Key frame="34" value="-3.68905" /><Key frame="38" value="-4.30429" /><Key frame="42" value="-3.68905" /><Key frame="46" value="-4.30429" /><Key frame="50" value="-3.68905" /></ActuatorCurve><ActuatorCurve name="value" actuator="RHipYawPitch" mute="0" unit="0"><Key frame="14" value="-11.7751" /><Key frame="18" value="-13.0056" /><Key frame="22" value="-11.7751" /><Key frame="26" value="-13.0056" /><Key frame="30" value="-11.7751" /><Key frame="34" value="-13.0056" /><Key frame="38" value="-11.7751" /><Key frame="42" value="-13.0056" /><Key frame="46" value="-11.7751" /><Key frame="50" value="-13.0056" /></ActuatorCurve><ActuatorCurve name="value" actuator="RKneePitch" mute="0" unit="0"><Key frame="14" value="38.0595" /><Key frame="18" value="48.3428" /><Key frame="22" value="38.0595" /><Key frame="26" value="48.3428" /><Key frame="30" value="38.0595" /><Key frame="34" value="48.3428" /><Key frame="38" value="38.0595" /><Key frame="42" value="48.3428" /><Key frame="46" value="38.0595" /><Key frame="50" value="48.3428" /></ActuatorCurve><ActuatorCurve name="value" actuator="RShoulderPitch" mute="0" unit="0"><Key frame="8" value="54.2" /><Key frame="13" value="66.2" /><Key frame="17" value="69.6" /><Key frame="21" value="66.2" /><Key frame="25" value="69.6" /><Key frame="29" value="66.2" /><Key frame="33" value="69.6" /><Key frame="37" value="66.2" /><Key frame="41" value="69.6" /><Key frame="45" value="66.2" /><Key frame="49" value="69.6" /></ActuatorCurve><ActuatorCurve name="value" actuator="RShoulderRoll" mute="0" unit="0"><Key frame="8" value="-12.8" /><Key frame="13" value="4.30429" /><Key frame="21" value="4.30429" /><Key frame="29" value="4.30429" /><Key frame="37" value="4.30429" /><Key frame="45" value="4.30429" /></ActuatorCurve><ActuatorCurve name="value" actuator="RWristYaw" mute="0" unit="0"><Key frame="10" value="36.1" /><Key frame="15" value="6.32579" /><Key frame="23" value="6.32579" /><Key frame="31" value="6.32579" /><Key frame="39" value="6.32579" /><Key frame="47" value="6.32579" /></ActuatorCurve></ActuatorList></Timeline><Resource name="Standing" type="Lock" timeout="1" /><Resource name="All motors" type="Lock" timeout="1" /></Box><Box name="Animated Say (4)" id="15" localization="8" tooltip="Say some text with animations. The text can be localized." x="1096" y="298"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="I mean, my tablet!" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech.&#x0A;disabled: The robot will only play the animations given by the user through the animation parameter.&#x0A;random: During time the robot has no animation to play, he will launch random neutral animations.&#x0A;contextual: During time the robot has no animation to play, he will try to launch a new one accordingly to the saying text. Every time the robot can&apos;t find a contextual animation he will launch a random neutral animation." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Speech Reco." id="5" localization="8" tooltip="Recognize a word from a list of words set in the box parameters.&#x0A;&#x0A;V1.1.0&#x0A;" x="98" y="49"><bitmap>media/images/box/interaction/ear.png</bitmap><script language="4"><content><![CDATA[
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        try:
+            self.asr = ALProxy("ALSpeechRecognition")
+        except Exception as e:
+            self.asr = None
+            self.logger.error(e)
+        self.memory = ALProxy("ALMemory")
+
+    def onLoad(self):
+        from threading import Lock
+        self.bIsRunning = False
+        self.mutex = Lock()
+        self.hasPushed = False
+        self.hasSubscribed = False
+        self.BIND_PYTHON(self.getName(), "onWordRecognized")
+
+    def onUnload(self):
+        from threading import Lock
+        self.mutex.acquire()
+        try:
+            if (self.bIsRunning):
+                if (self.hasSubscribed):
+                    self.memory.unsubscribeToEvent("WordRecognized", self.getName())
+                if (self.hasPushed and self.asr):
+                    self.asr.popContexts()
+        except RuntimeError, e:
+            self.mutex.release()
+            raise e
+        self.bIsRunning = False;
+        self.mutex.release()
+
+    def onInput_onStart(self):
+        from threading import Lock
+        self.mutex.acquire()
+        if(self.bIsRunning):
+            self.mutex.release()
+            return
+        self.bIsRunning = True
+        try:
+            if self.asr:
+                self.asr.setVisualExpression(self.getParameter("Visual expression"))
+                self.asr.pushContexts()
+            self.hasPushed = True
+            if self.asr:
+                self.asr.setVocabulary( self.getParameter("Word list").split(';'), self.getParameter("Enable word spotting") )
+            self.memory.subscribeToEvent("WordRecognized", self.getName(), "onWordRecognized")
+            self.hasSubscribed = True
+        except RuntimeError, e:
+            self.mutex.release()
+            self.onUnload()
+            raise e
+        self.mutex.release()
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload()
+            self.onStopped()
+
+    def onWordRecognized(self, key, value, message):
+        if(len(value) > 1 and value[1] >= self.getParameter("Confidence threshold (%)")/100.):
+            self.wordRecognized(value[0]) #~ activate output of the box
+        else:
+            self.onNothing()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="wordRecognized" type="3" type_size="1" nature="2" inner="0" tooltip="Word recognized with a confidence higher than the threshold set in the box parameters." id="5" /><Output name="onNothing" type="1" type_size="1" nature="2" inner="0" tooltip="Nothing has been understood." id="6" /><Parameter name="Word list" inherits_from_parent="0" content_type="3" value="Yes;No;Please;Yes Please" default_value="yes;no" custom_choice="0" tooltip="Try to recognize a word from a list of words set in the box parameters." id="7" /><Parameter name="Confidence threshold (%)" inherits_from_parent="0" content_type="1" value="43" default_value="30" min="0" max="100" tooltip="If the confidence associated with the word recognized is below this threshold, the robot will consider that it is not recognized." id="8" /><Parameter name="Visual expression" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="Use the LEDs to show feedbacks from the robot during the recognition.&#x0A;&#x0A;For example:&#x0A;- Eyes leds get blue and turn when the speech recognition is launched.&#x0A;- They get yellow when the robot hears someone talking and analyses what it heard.&#x0A;- They flash in green when the robot understood and flash in red otherwise." id="9" /><Parameter name="Enable word spotting" inherits_from_parent="0" content_type="0" value="0" default_value="0" tooltip="If this option is not activated the robot will only understand exact expressions. If it is, he will spot the exact expressions even in the middle of a sentence.&#x0A;&#x0A;!!Warning!! This option is only available with the speech recognition module using Nuance (ie in Atom version of the robot)." id="10" /><Resource name="Speech recognition" type="Lock" timeout="0" /></Box><Link inputowner="0" indexofinput="4" outputowner="3" indexofoutput="4" /><Link inputowner="0" indexofinput="4" outputowner="4" indexofoutput="3" /><Link inputowner="14" indexofinput="2" outputowner="1" indexofoutput="6" /><Link inputowner="1" indexofinput="3" outputowner="14" indexofoutput="4" /><Link inputowner="16" indexofinput="3" outputowner="14" indexofoutput="4" /><Link inputowner="11" indexofinput="2" outputowner="2" indexofoutput="4" /><Link inputowner="11" indexofinput="2" outputowner="2" indexofoutput="6" /><Link inputowner="11" indexofinput="2" outputowner="2" indexofoutput="7" /><Link inputowner="1" indexofinput="2" outputowner="11" indexofoutput="4" /><Link inputowner="14" indexofinput="3" outputowner="16" indexofoutput="4" /><Link inputowner="7" indexofinput="2" outputowner="6" indexofoutput="4" /><Link inputowner="10" indexofinput="2" outputowner="7" indexofoutput="5" /><Link inputowner="9" indexofinput="2" outputowner="8" indexofoutput="3" /><Link inputowner="4" indexofinput="2" outputowner="9" indexofoutput="5" /><Link inputowner="6" indexofinput="2" outputowner="1" indexofoutput="7" /><Link inputowner="7" indexofinput="3" outputowner="7" indexofoutput="5" /><Link inputowner="9" indexofinput="3" outputowner="9" indexofoutput="5" /><Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="5" /><Link inputowner="3" indexofinput="2" outputowner="10" indexofoutput="5" /><Link inputowner="12" indexofinput="2" outputowner="10" indexofoutput="4" /><Link inputowner="12" indexofinput="2" outputowner="10" indexofoutput="6" /><Link inputowner="12" indexofinput="2" outputowner="10" indexofoutput="7" /><Link inputowner="13" indexofinput="2" outputowner="1" indexofoutput="6" /><Link inputowner="16" indexofinput="2" outputowner="13" indexofoutput="4" /><Link inputowner="15" indexofinput="2" outputowner="12" indexofoutput="4" /><Link inputowner="8" indexofinput="2" outputowner="15" indexofoutput="4" /><Link inputowner="5" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="2" indexofinput="2" outputowner="5" indexofoutput="5" /><Link inputowner="5" indexofinput="3" outputowner="5" indexofoutput="5" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
